@@ -5,12 +5,12 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 )
 
-type mysql struct {
+type mysqlHandle struct {
 	dsn string
 	conn *sql.DB
 }
 
-func NewMysql(dsn string) (m *mysql, err error) {
+func NewMysqlHandle(dsn string) (m *mysqlHandle, err error) {
 	db, err := sql.Open("mysql", dsn)
 	if err != nil {
 		return
@@ -19,7 +19,7 @@ func NewMysql(dsn string) (m *mysql, err error) {
 	if err != nil {
 		return
 	}
-	m = &mysql{
+	m = &mysqlHandle{
 		dsn: dsn,
 		conn: db,
 	}
@@ -27,7 +27,7 @@ func NewMysql(dsn string) (m *mysql, err error) {
 }
 
 // mysql> show tables;
-func (m *mysql) ShowTables() (tables []string, err error) {
+func (m *mysqlHandle) ShowTables() (tables []string, err error) {
 
 	rows, err := m.conn.Query("SHOW TABLES;")
 	if err != nil {
@@ -47,7 +47,7 @@ func (m *mysql) ShowTables() (tables []string, err error) {
 }
 
 // mysql> desc table
-func (m *mysql) DescTable(table string) (desc []map[string]string, err error) {
+func (m *mysqlHandle) DescTable(table string) (desc []map[string]string, err error) {
 
 	rows, err := m.conn.Query("DESC "+table+";")
 	if err != nil {
@@ -79,7 +79,7 @@ func (m *mysql) DescTable(table string) (desc []map[string]string, err error) {
 }
 
 // check table is exists
-func (m *mysql) TableIsExists(table string) (bool, error) {
+func (m *mysqlHandle) TableIsExists(table string) (bool, error) {
 	tables, err := m.ShowTables()
 	if err != nil {
 		return false, err
@@ -93,7 +93,7 @@ func (m *mysql) TableIsExists(table string) (bool, error) {
 }
 
 // mysql>show create table table_name
-func (m *mysql) ShowCreateTable(table string) (createTable string, err error) {
+func (m *mysqlHandle) ShowCreateTable(table string) (createTable string, err error) {
 	row := m.conn.QueryRow("SHOW CREATE TABLE "+table+";")
 	var name string
 	err = row.Scan(&name, &createTable)
@@ -103,8 +103,14 @@ func (m *mysql) ShowCreateTable(table string) (createTable string, err error) {
 	return createTable, nil
 }
 
+// drop table
+func (m *mysqlHandle) DropTable(table string) (err error) {
+	_, err = m.conn.Exec("DROP TABLE IF EXISTS "+table)
+	return
+}
+
 // create table
-func (m *mysql) CreateTable(table string, sql string) (err error) {
+func (m *mysqlHandle) CreateTable(table string, sql string) (err error) {
 	_, err = m.conn.Exec(sql+";")
 	if err != nil {
 		return
@@ -114,6 +120,6 @@ func (m *mysql) CreateTable(table string, sql string) (err error) {
 }
 
 // close mysql conn
-func (m *mysql) Close() {
+func (m *mysqlHandle) Close() {
 	m.conn.Close()
 }

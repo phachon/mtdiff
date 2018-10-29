@@ -70,3 +70,24 @@ func TestMysql_ShowCreateTable(t *testing.T) {
 	}
 	fmt.Println(createTable)
 }
+
+func TestMysql_CreateTable(t *testing.T) {
+	m, err := NewMysql(dsn)
+	if err != nil {
+		t.Error(err.Error())
+	}
+	defer m.Close()
+
+	sql, err := m.ShowCreateTable("user_info")
+	if err != nil {
+		t.Error(err.Error())
+	}
+	err = m.DropTable("user_info")
+	if err != nil {
+		t.Error(err.Error())
+	}
+	err = m.CreateTable("user_info", sql)
+	if err != nil {
+		t.Error(err.Error())
+	}
+}
